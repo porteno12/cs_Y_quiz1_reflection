@@ -228,6 +228,36 @@ footer{font-size:13px;color:var(--muted);text-align:center}
 .a-conf{animation:conf 3s ease-out infinite}
 @keyframes conf{0%,20%{transform:translateY(8px) scale(0);opacity:0}45%{opacity:1}100%{transform:translateY(-10px) scale(1);opacity:0}}
 
+/* wide screens: use the width instead of one narrow column */
+@media (min-width:860px){
+  body{font-size:18px}
+  .wrap{max-width:980px;padding:44px 36px 64px;gap:32px}
+  h1{font-size:92px}
+  h2{font-size:52px}
+  .track li span{display:block;white-space:nowrap}
+  .track li{font-size:14px}
+  .card{padding:40px 44px}
+  .screen{gap:26px}
+  .hero{width:120px;height:120px}
+  .scene{width:104px;height:104px}
+  .lead{font-size:20px}
+  .g3,.g2{display:grid;gap:14px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3 legend,.g2 legend{grid-column:1/-1}
+  .g3 .opt .box,.g2 .opt .box{height:100%}
+  .thumbs{grid-template-columns:repeat(3,180px)}
+  .screen[data-step="2"] [data-page="1"]{display:grid;grid-template-columns:1fr 1fr;gap:20px 24px}
+  .screen[data-step="2"] [data-page="1"] > :not(.sub){grid-column:1/-1}
+  .rub{flex-direction:row;align-items:center;gap:24px}
+  .rub .txt{flex:1}
+  .rub .seg{flex:none;width:320px}
+  #reflect,#feedback,#teach{display:grid;grid-template-columns:1fr 1fr;gap:28px 36px;align-items:start}
+  #reflect > .part,#feedback > .part,#teach > .part,#reflect > .field,#feedback > .field,#teach > .field{grid-column:1/-1}
+  .nav{justify-content:flex-start}
+  .nav button.main{flex:0 1 340px}
+  #retake .main{align-self:flex-start;min-width:340px}
+}
 .rise{animation:rise .5s ease-out both}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none !important;transition:none !important}}
@@ -305,7 +335,7 @@ footer{font-size:13px;color:var(--muted);text-align:center}
         <label class="label" for="f-name">איך קוראים לך?</label>
         <input type="text" id="f-name" data-k="name" autocomplete="name" placeholder="שם פרטי ושם משפחה">
       </div>
-      <fieldset>
+      <fieldset class="g3">
         <legend>איזה נוסח פתרת בבוחן?</legend>
         <label class="opt"><input type="radio" name="version" id="ver-a" value="א"><span class="box"><span class="letter">א</span><span><span class="name">מכונת הכרטיסים</span><span class="desc">מכירת כרטיסים בקולנוע</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-ticket"/></svg></span></span></label>
         <label class="opt"><input type="radio" name="version" id="ver-b" value="ב"><span class="box"><span class="letter">ב</span><span><span class="name">מעבדת המספרים</span><span class="desc">מספר משוכלל, שופע או חסר</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-flask"/></svg></span></span></label>
@@ -389,7 +419,7 @@ footer{font-size:13px;color:var(--muted);text-align:center}
         <h2 tabindex="-1">משווים</h2>
       </div>
       <p class="lead">הניחו את שני הפתרונות זה ליד זה, ועברו שורה אחר שורה.</p>
-      <fieldset>
+      <fieldset class="g2">
         <legend>מצאתם הבדלים שמשנים את התוצאה?</legend>
         <label class="opt"><input type="radio" name="diff" id="diff-yes" value="yes"><span class="box"><span><span class="name">כן, יש הבדלים</span><span class="desc">בתשובה מהבוחן יש טעות אחת או יותר</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-x"/></svg></span></span></label>
         <label class="opt"><input type="radio" name="diff" id="diff-no" value="no"><span class="box"><span><span class="name">לא, אין הבדלים</span><span class="desc">התשובה מהבוחן נכונה: בלי טעויות, ובלי שינויים שמשפיעים על הפלט</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg></span></span></label>
@@ -484,7 +514,7 @@ footer{font-size:13px;color:var(--muted);text-align:center}
         <h2 tabindex="-1">מחליטים</h2>
       </div>
       <p class="lead">הציון שיצא בבוחן: <strong id="final-score"></strong>. מה עושים איתו?</p>
-      <fieldset>
+      <fieldset class="g2">
         <legend>הבחירה שלי</legend>
         <label class="opt"><input type="radio" name="choice" id="ch-keep" value="keep"><span class="box"><span><span class="name">משאירים את הציון</span><span class="desc">המטלה מסתיימת כאן</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg></span></span></label>
         <label class="opt"><input type="radio" name="choice" id="ch-draw" value="draw"><span class="box"><span><span class="name">מגרילים שאלה חדשה</span><span class="desc">שאלה מאחד משני הנוסחים האחרים, עם שינוי קטן. הגרלה חד-פעמית.</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dice"/></svg></span></span></label>
