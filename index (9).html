@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>לומדים מהבוחן</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Karantina:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one narrow column, an 8-stop track with a bug that walks to the current stop, one task card with an animated scene per step. */
+:root{
+  --bg:#eef3f2;
+  --surface:#ffffff;
+  --ink:#10262b;
+  --muted:#50666b;
+  --line:#cfdcda;
+  --accent:#d93a22;
+  --teal:#0e7c7b;
+  --c0:#1971c2;--c1:#d9730d;--c2:#0c8599;--c3:#6741d9;--c4:#c2255c;--c5:#3b5bdb;--c6:#087f5b;--c7:#9c36b5;--c8:#2f9e44;
+  --step:var(--c0);--step-ink:#ffffff;
+  --font-display:"Karantina","IBM Plex Sans Hebrew","Arial Hebrew",Arial,sans-serif;
+  --font-body:"IBM Plex Sans Hebrew","Arial Hebrew","Segoe UI",Arial,sans-serif;
+  --font-code:ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1f24;--surface:#15303a;--ink:#e9f3f1;--muted:#9db4b4;--line:#2a4a55;--accent:#ff6b4f;--teal:#4fd1c5;
+    --c0:#74c0fc;--c1:#ffa94d;--c2:#3bc9db;--c3:#b197fc;--c4:#f783ac;--c5:#91a7ff;--c6:#63e6be;--c7:#da77f2;--c8:#69db7c;--step-ink:#10262b;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1f24;--surface:#15303a;--ink:#e9f3f1;--muted:#9db4b4;--line:#2a4a55;--accent:#ff6b4f;--teal:#4fd1c5;
+  --c0:#74c0fc;--c1:#ffa94d;--c2:#3bc9db;--c3:#b197fc;--c4:#f783ac;--c5:#91a7ff;--c6:#63e6be;--c7:#da77f2;--c8:#69db7c;--step-ink:#10262b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.6;-webkit-text-size-adjust:100%}
+.wrap{max-width:560px;margin:0 auto;padding:28px 20px 40px;display:flex;flex-direction:column;gap:26px}
+.wrap[data-step="1"]{--step:var(--c1)}.wrap[data-step="2"]{--step:var(--c2)}.wrap[data-step="3"]{--step:var(--c3)}
+.wrap[data-step="4"]{--step:var(--c4)}.wrap[data-step="5"]{--step:var(--c8)}.wrap[data-step="6"]{--step:var(--c5)}
+.wrap[data-step="7"]{--step:var(--c6)}.wrap[data-step="8"]{--step:var(--c7)}.wrap[data-step="9"]{--step:var(--c8)}
+.ic{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.eyebrow{font-size:14px;font-weight:600;color:var(--teal);margin:0}
+h1{font-family:var(--font-display);font-weight:700;font-size:64px;line-height:.95;margin:4px 0 0;text-wrap:balance}
+h1 mark{background:linear-gradient(transparent 58%,color-mix(in srgb,var(--step) 35%,transparent) 58%);color:inherit;padding:0 4px;transition:background .4s}
+h2{font-family:var(--font-display);font-weight:700;font-size:40px;line-height:1;margin:0;text-wrap:balance}
+h2:focus{outline:none}
+
+/* track */
+.track{position:relative;padding-top:34px}
+.track ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(9,1fr);position:relative}
+.track ol::before{content:"";position:absolute;top:15px;right:calc(100%/18);left:calc(100%/18);height:2px;background:var(--line)}
+.track li{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;color:var(--muted);position:relative}
+.track .node{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:2px solid var(--line);color:var(--muted);position:relative;z-index:1;transition:background .3s,border-color .3s,color .3s,transform .3s}
+.track .node .ic{width:16px;height:16px}
+.track li.done .node{background:var(--teal);border-color:var(--teal);color:var(--surface)}
+.track li[aria-current="step"]{color:var(--ink);font-weight:600}
+.track li[aria-current="step"] .node{background:var(--step);border-color:var(--step);color:var(--step-ink);transform:scale(1.12);box-shadow:0 0 0 5px color-mix(in srgb,var(--step) 20%,transparent)}
+.bugpos{position:absolute;top:2px;right:calc((100% / 9) * var(--i,0) + (100% / 18) - 15px);width:30px;height:30px;transition:right .6s cubic-bezier(.5,1.4,.5,1)}
+.bug{display:block;width:30px;height:30px;color:var(--step);transition:color .4s;animation:wiggle 1.6s ease-in-out infinite;transform-origin:50% 80%}
+.count{margin:10px 0 0;font-size:14px;color:var(--muted)}
+@keyframes wiggle{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg) translateY(-2px)}}
+.track li span{display:none}.track li[aria-current="step"] span{display:block;white-space:nowrap}
+
+/* card and screens */
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--step);border-radius:18px;padding:24px 20px;transition:border-color .4s}
+.screen{display:none;flex-direction:column;gap:20px}
+.screen.on{display:flex;animation:rise .4s ease-out both}
+.head{display:flex;align-items:center;gap:14px}
+.hero{flex:none;width:96px;height:96px;display:grid;place-items:center;background:color-mix(in srgb,var(--step) 14%,var(--surface));border-radius:42% 58% 55% 45% / 48% 42% 58% 52%;animation:blob 8s ease-in-out infinite}
+@keyframes blob{0%,100%{border-radius:42% 58% 55% 45% / 48% 42% 58% 52%}50%{border-radius:56% 44% 42% 58% / 44% 56% 44% 56%}}
+.lead{margin:0;max-width:65ch}
+.lead strong{font-weight:600}
+.hint{margin:0;font-size:14px;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:8px;min-width:0}
+.label{font-weight:600;font-size:16px}
+input[type="text"],textarea,select{font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+textarea{min-height:110px;resize:vertical;line-height:1.5}
+textarea.big{min-height:170px}
+textarea.code,input.code{direction:ltr;text-align:left;font-family:var(--font-code);font-size:14px}
+textarea.code{min-height:220px;white-space:pre;overflow:auto}
+input[type="text"]:focus-visible,textarea:focus-visible,select:focus-visible{outline:none;border-color:var(--step)}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+legend{font-weight:600;font-size:16px;padding:0;margin-bottom:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.chips li{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 14px;border-radius:999px;font-weight:600;font-size:15px;background:var(--bg);border:1px solid var(--line);animation:rise .5s ease-out both}
+.chips li:nth-child(2){animation-delay:.15s}.chips li:nth-child(3){animation-delay:.3s}
+.chips .ic{width:18px;height:18px;stroke-width:2.6}
+.chips li:nth-child(1) .ic{color:var(--c7)}.chips li:nth-child(2) .ic{color:var(--c1)}.chips li:nth-child(3) .ic{color:var(--c0)}
+.call{display:flex;align-items:center;gap:12px;margin:0;padding:12px 14px;border-radius:14px;font-weight:600;background:color-mix(in srgb,var(--step) 12%,var(--surface));border-inline-start:5px solid var(--step)}
+.call .ic{color:var(--step);width:28px;height:28px}
+
+/* part banner: a strong break between sections */
+.part{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--step);color:var(--step-ink)}
+.part .num{flex:none;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-family:var(--font-display);font-size:34px;line-height:1;background:color-mix(in srgb,var(--step-ink) 20%,transparent)}
+.part strong{display:block;font-size:19px;line-height:1.25}
+.part small{display:block;font-size:14px;opacity:.92}
+.bridge{display:flex;flex-direction:column;gap:12px;padding:18px 16px;border-radius:16px;background:color-mix(in srgb,var(--step) 12%,var(--surface));border:2px solid var(--step)}
+.bridge p{margin:0}
+.bridge strong{font-size:19px}
+.note{margin:0;padding:14px;border-radius:14px;border:2px solid var(--step);font-weight:500}
+
+.opt{position:relative;display:block}
+.opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.opt .box{display:flex;align-items:center;gap:14px;border:2px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--bg);transition:border-color .15s,background .15s}
+.opt .letter{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-family:var(--font-display);font-size:34px;line-height:1;background:var(--surface);border:2px solid var(--line);color:var(--muted);transition:background .15s,color .15s,border-color .15s}
+.opt .name{font-weight:600;display:block}
+.opt .desc{font-size:14px;color:var(--muted);display:block}
+.opt .side{margin-inline-start:auto;color:var(--muted);transition:color .15s}
+.opt input:checked + .box{border-color:var(--step);background:var(--surface);animation:pop .25s ease-out}
+.opt input:checked + .box .letter{background:var(--step);border-color:var(--step);color:var(--step-ink)}
+.opt input:checked + .box .side{color:var(--step)}
+.opt input:focus-visible + .box{outline:3px solid var(--step);outline-offset:2px}
+@keyframes pop{0%{transform:scale(.98)}60%{transform:scale(1.015)}100%{transform:scale(1)}}
+
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pills label{position:relative}
+.pills input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.pills span{display:block;padding:8px 14px;border:2px solid var(--line);border-radius:999px;background:var(--bg);font-size:15px;font-weight:500;transition:background .15s,border-color .15s,color .15s}
+.pills input:checked + span{background:var(--step);border-color:var(--step);color:var(--step-ink)}
+.pills input:focus-visible + span{outline:3px solid var(--step);outline-offset:2px}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.scale label{position:relative}
+.scale input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.scale span{display:block;text-align:center;padding:9px 0;border:2px solid var(--line);border-radius:10px;background:var(--bg);font-weight:600;font-variant-numeric:tabular-nums}
+.scale input:checked + span{background:var(--step);border-color:var(--step);color:var(--step-ink)}
+.scale input:focus-visible + span{outline:3px solid var(--step);outline-offset:2px}
+.ends{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+
+.sub{border:1px dashed var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.sub h3{margin:0;font-size:16px;font-weight:600}
+.reveal{display:none;flex-direction:column;gap:20px}
+.reveal.on{display:flex;animation:rise .35s ease-out both}
+.stack{display:flex;flex-direction:column;gap:20px}
+
+.pick{position:relative;display:block}
+.pick input{position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer}
+.pick span{display:flex;align-items:center;justify-content:center;gap:10px;border:2px dashed var(--step);color:var(--step);font-weight:600;border-radius:14px;padding:18px 14px;background:var(--bg)}
+.pick input:focus-visible + span{outline:3px solid var(--step);outline-offset:2px}
+.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.thumb{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg);aspect-ratio:3/4}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:6px;left:6px;width:32px;height:32px;padding:0;border-radius:50%;font-size:18px;line-height:1;background:var(--ink);color:var(--bg)}
+
+.rub{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.rub:last-child{border-bottom:0}
+.rub .txt{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.rub .pts{flex:none;font-size:14px;font-weight:600;color:var(--step);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rub .pts.new{animation:pop .3s ease-out}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.seg span{display:block;text-align:center;font-size:15px;font-weight:500;padding:8px 4px;border:2px solid var(--line);border-radius:10px;background:var(--bg)}
+.seg input:checked + span{background:var(--step);border-color:var(--step);color:var(--step-ink)}
+.seg input:focus-visible + span{outline:3px solid var(--step);outline-offset:2px}
+.score{position:sticky;bottom:10px;display:flex;justify-content:space-between;align-items:baseline;background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 16px}
+.score b{font-family:var(--font-display);font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+
+.q{border:2px solid var(--step);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.q h3{margin:0;font-size:18px}
+.q p,.q ul,.q ol{margin:0}
+.q ul,.q ol{padding-inline-start:22px}
+.q .ex{overflow-x:auto}
+.q table{border-collapse:collapse;width:100%;font-size:14px}
+.q th,.q td{border:1px solid var(--line);padding:6px 8px;text-align:right}
+.q td.io{direction:ltr;text-align:left;font-family:var(--font-code)}
+
+.pips{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.pips i{width:28px;height:6px;border-radius:3px;background:var(--line);transition:background .3s}
+.pips i.on{background:var(--step)}
+.pips span{margin-inline-start:6px}
+.error{margin:0;color:var(--accent);font-size:15px;font-weight:500;min-height:1.4em}
+.nav{display:flex;gap:10px}
+button{font:inherit;font-weight:600;font-size:18px;cursor:pointer;background:var(--step);color:var(--step-ink);border:0;border-radius:14px;padding:14px 20px;transition:transform .12s,background .4s}
+button.main{flex:1}
+button.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+button.small{font-size:15px;padding:10px 14px;align-self:flex-start}
+button:active{transform:translateY(1px)}
+button:focus-visible{outline:3px solid var(--step);outline-offset:3px}
+button[disabled]{opacity:.6;cursor:default}
+.ok{margin:0;font-weight:600;color:var(--teal)}
+.preview{margin:0;font-size:14px;color:var(--muted)}
+.pv{margin:0;padding:10px 14px;border-radius:12px;font-size:14px;background:var(--ink);color:var(--bg)}
+.pvq{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.wrap.preview .track li{cursor:pointer}
+footer{font-size:13px;color:var(--muted);text-align:center}
+
+/* animated scenes */
+.scene{width:84px;height:84px;overflow:visible}
+.scene *{transform-box:fill-box;transform-origin:center}
+.s-paper{fill:var(--surface);stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.s-ln{fill:none;stroke:var(--line);stroke-width:3;stroke-linecap:round}
+.s-st{fill:none;stroke:var(--step);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.s-ink{fill:none;stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.s-fillc{fill:var(--step)}
+.s-soft{fill:color-mix(in srgb,var(--step) 28%,var(--surface));stroke:var(--step);stroke-width:4;stroke-linejoin:round}
+.a-sweep{animation:sweep 4s ease-in-out infinite}
+@keyframes sweep{0%,100%{transform:translate(-12px,-20px)}50%{transform:translate(4px,6px)}}
+.a-flash{fill:var(--ink);animation:flash 2.6s ease-in-out infinite}
+@keyframes flash{0%,70%,100%{transform:scale(1);opacity:1}80%{transform:scale(2.6);opacity:.15}}
+.a-type{stroke-dasharray:44;animation:type 3.6s ease-in-out infinite}
+.a-type.t2{animation-delay:.5s}.a-type.t3{animation-delay:1s}
+@keyframes type{0%{stroke-dashoffset:44}35%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:44}}
+.a-scan{fill:color-mix(in srgb,var(--step) 24%,transparent);animation:scan 3.6s ease-in-out infinite}
+@keyframes scan{0%,100%{transform:translateY(0)}50%{transform:translateY(36px)}}
+.a-bar{transform-origin:left center;animation:bar 3.2s ease-in-out infinite}
+.a-bar.b2{animation-delay:.3s}.a-bar.b3{animation-delay:.6s}
+@keyframes bar{0%{transform:scaleX(0)}40%,85%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+.a-glow{animation:glow 2.8s ease-in-out infinite}
+@keyframes glow{0%,100%{fill:color-mix(in srgb,var(--step) 12%,var(--surface))}50%{fill:color-mix(in srgb,var(--step) 55%,var(--surface))}}
+.a-rays{animation:rays 2.8s ease-in-out infinite}
+@keyframes rays{0%,100%{opacity:.15}50%{opacity:1}}
+.a-dot{fill:var(--step);animation:hop 1.4s ease-in-out infinite}
+.a-dot.d2{animation-delay:.18s}.a-dot.d3{animation-delay:.36s}
+@keyframes hop{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+.a-roll{animation:roll 3.4s cubic-bezier(.5,0,.3,1.4) infinite}
+@keyframes roll{0%,55%{transform:rotate(0)}85%,100%{transform:rotate(360deg)}}
+.a-check{stroke-dasharray:60;animation:draw 3s ease-out infinite}
+@keyframes draw{0%{stroke-dashoffset:60}35%,100%{stroke-dashoffset:0}}
+.a-conf{animation:conf 3s ease-out infinite}
+@keyframes conf{0%,20%{transform:translateY(8px) scale(0);opacity:0}45%{opacity:1}100%{transform:translateY(-10px) scale(1);opacity:0}}
+
+.rise{animation:rise .5s ease-out both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap" lang="he" dir="rtl" data-step="0">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-paper" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h7M9 16h7"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="i-code" viewBox="0 0 24 24"><path d="M8 8l-5 4 5 4M16 8l5 4-5 4M13.5 5l-3 14"/></symbol>
+<symbol id="i-compare" viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="14" rx="1.5"/><rect x="13" y="5" width="8" height="14" rx="1.5"/><path d="M5.5 9h3M5.5 12h3M15.5 9h3M15.5 12h3"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 16.9 6.6 19.8l1.1-6.1L3.2 9.4l6.1-.8z"/></symbol>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-5 4v-4H4z"/></symbol>
+<symbol id="i-class" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17.5" cy="8" r="2.5"/><path d="M16.5 14a5 5 0 0 1 4.5 5"/></symbol>
+<symbol id="i-dice" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.3" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4 4 10-10"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+<symbol id="i-next" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+<symbol id="i-solo" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+<symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3 9a3 3 0 0 0 0 6v4h18v-4a3 3 0 0 1 0-6V5H3z"/><path d="M14 6v12" stroke-dasharray="2 3"/></symbol>
+<symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M8 15h8"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
+</defs></svg>
+
+  <p class="pv" id="pv-banner" hidden>מצב תצוגה: אפשר לעבור בין כל המסכים בלי למלא, ושום דבר לא נשמר. לחיצה על שלב במסלול קופצת אליו.</p>
+
+  <header class="rise">
+    <p class="eyebrow">יסודות · בוחן ראשון</p>
+    <h1>לומדים <mark>מהבוחן</mark></h1>
+  </header>
+
+  <nav class="track rise" id="track" aria-label="שלבי המטלה">
+    <div class="bugpos" id="bugpos">
+      <svg class="bug" viewBox="0 0 30 30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M6 12 2 9M6 17H1M6 22l-4 3M24 12l4-3M24 17h5M24 22l4 3M12 6 9 2M18 6l3-4"/>
+        <ellipse cx="15" cy="18" rx="8" ry="9" fill="currentColor"/>
+        <circle cx="15" cy="8" r="4" fill="currentColor"/>
+      </svg>
+    </div>
+    <ol>
+      <li><i class="node"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-paper"/></svg></i><span>פתיחה</span></li>
+      <li><i class="node"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-camera"/></svg></i><span>צילום</span></li>
+      <li><i class="node"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-code"/></svg></i><span>פתרון</span></li>
+      <li><i class="node"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-compare"/></svg></i><span>השוואה</span></li>
+      <li><i class="node"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg></i><span>ציון</span></li>
+      <li><i class="node"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dice"/></svg></i><span>בחירה</span></li>
+      <li><i class="node"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-bulb"/></svg></i><span>רפלקציה</span></li>
+      <li><i class="node"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg></i><span>משוב</span></li>
+      <li><i class="node"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-class"/></svg></i><span>סקר הוראה</span></li>
+    </ol>
+    <p class="count" id="count">שלב 1 מתוך 9</p>
+  </nav>
+
+  <main class="card">
+
+    <!-- 1 opening -->
+    <section class="screen" data-step="0">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <rect class="s-paper" x="24" y="14" width="44" height="62" rx="5"/>
+          <path class="s-ln" d="M32 28h28M32 38h28M32 48h20M32 58h24"/>
+          <g class="a-sweep"><circle class="s-soft" cx="58" cy="54" r="13"/><path class="s-st" d="M68 64l10 10"/></g>
+        </svg></div>
+        <p class="lead"><strong>חוזרים לבוחן הראשון</strong>, ובודקים שלושה דברים:</p>
+      </div>
+      <ul class="chips">
+        <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg> מה עבד</li>
+        <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg> מה פחות</li>
+        <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-next"/></svg> מה לוקחים הלאה</li>
+      </ul>
+      <div class="field">
+        <label class="label" for="f-name">איך קוראים לך?</label>
+        <input type="text" id="f-name" data-k="name" autocomplete="name" placeholder="שם פרטי ושם משפחה">
+      </div>
+      <fieldset>
+        <legend>איזה נוסח פתרת בבוחן?</legend>
+        <label class="opt"><input type="radio" name="version" id="ver-a" value="א"><span class="box"><span class="letter">א</span><span><span class="name">מכונת הכרטיסים</span><span class="desc">מכירת כרטיסים בקולנוע</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-ticket"/></svg></span></span></label>
+        <label class="opt"><input type="radio" name="version" id="ver-b" value="ב"><span class="box"><span class="letter">ב</span><span><span class="name">מעבדת המספרים</span><span class="desc">מספר משוכלל, שופע או חסר</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-flask"/></svg></span></span></label>
+        <label class="opt"><input type="radio" name="version" id="ver-c" value="ג"><span class="box"><span class="letter">ג</span><span><span class="name">קרב ההישרדות</span><span class="desc">משחק אסטרטגיה עם קוד תקיפה</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-heart"/></svg></span></span></label>
+      </fieldset>
+    </section>
+
+    <!-- 2 photo -->
+    <section class="screen" data-step="1">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <rect class="s-paper" x="30" y="8" width="36" height="46" rx="4"/>
+          <path class="s-ln" d="M37 20h22M37 29h22M37 38h14"/>
+          <rect class="s-fillc" x="38" y="40" width="20" height="10" rx="3"/>
+          <rect class="s-fillc" x="14" y="46" width="68" height="40" rx="9"/>
+          <circle class="s-paper" cx="48" cy="66" r="12"/>
+          <circle class="a-flash" cx="48" cy="66" r="4.5"/>
+        </svg></div>
+        <h2 tabindex="-1">מצלמים את התשובה</h2>
+      </div>
+      <p class="lead">צלמו את התשובה מהבוחן, כמו שהיא.</p>
+      <label class="pick"><input type="file" id="f-photo" accept="image/*" multiple><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-camera"/></svg> בחירת תמונה או צילום</span></label>
+      <div class="thumbs" id="thumbs"></div>
+      <p class="hint">עד שלוש תמונות. ודאו שהכתב קריא.</p>
+    </section>
+
+    <!-- 3 solve -->
+    <section class="screen" data-step="2">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <rect class="s-paper" x="10" y="16" width="76" height="64" rx="8"/>
+          <path class="s-ink" d="M10 32h76"/>
+          <circle class="s-fillc" cx="20" cy="24" r="2.6"/><circle class="s-fillc" cx="29" cy="24" r="2.6"/>
+          <path class="s-st a-type" d="M20 45h32"/><path class="s-st a-type t2" d="M28 56h40"/><path class="s-st a-type t3" d="M28 67h24"/>
+        </svg></div>
+        <h2 tabindex="-1">פותרים מחדש</h2>
+      </div>
+      <div class="stack" data-page="0">
+      <p class="lead">פתרו שוב את שאלת הבוחן, בסביבת פיתוח לבחירתכם.</p>
+      <p class="call"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-solo"/></svg><span>לבד: בלי בינה מלאכותית, בלי חברים, בלי להציץ בבוחן.</span></p>
+
+      <div class="part"><span class="num">1</span><div><strong>כותבים ומריצים</strong><small>עד שהתוכנית רצה בלי שגיאות</small></div></div>
+      <div class="field">
+        <label class="label" for="f-code">הקוד החדש, אחרי שרץ</label>
+        <textarea class="code" id="f-code" data-k="code" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+      </div>
+
+      </div>
+      <div class="stack" data-page="1">
+      <div class="part"><span class="num">2</span><div><strong>בודקים שהפתרון נכון</strong><small>רץ זה עדיין לא נכון</small></div></div>
+      <p class="lead">הקוד רץ? עכשיו השאלה היא אם הוא גם נכון. תוכנית יכולה לרוץ בלי שגיאות ועדיין להדפיס תשובה שגויה.</p>
+      <p class="lead">לכן מריצים אותה על שני קלטים שונים. לכל הרצה רשמו מה הקלדתם ומה התוכנית הדפיסה.</p>
+      <div class="sub">
+        <h3>בדיקה 1: קלט רגיל</h3>
+        <p class="hint">למשל דוגמה מדף הבוחן.</p>
+        <div class="two">
+          <div class="field"><label class="hint" for="f-t1in">הקלט</label><input type="text" class="code" id="f-t1in" data-k="t1in" autocomplete="off"></div>
+          <div class="field"><label class="hint" for="f-t1out">הפלט שהתקבל</label><input type="text" class="code" id="f-t1out" data-k="t1out" autocomplete="off"></div>
+        </div>
+      </div>
+      <div class="sub">
+        <h3>בדיקה 2: מקרה קצה</h3>
+        <p class="hint">למשל הערך הקטן ביותר שמותר, או 0 מיד בהתחלה.</p>
+        <div class="two">
+          <div class="field"><label class="hint" for="f-t2in">הקלט</label><input type="text" class="code" id="f-t2in" data-k="t2in" autocomplete="off"></div>
+          <div class="field"><label class="hint" for="f-t2out">הפלט שהתקבל</label><input type="text" class="code" id="f-t2out" data-k="t2out" autocomplete="off"></div>
+        </div>
+      </div>
+    </div>
+    </section>
+
+    <!-- 4 compare -->
+    <section class="screen" data-step="3">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <rect class="s-paper" x="8" y="16" width="36" height="64" rx="5"/><rect class="s-paper" x="52" y="16" width="36" height="64" rx="5"/>
+          <path class="s-ln" d="M15 30h22M15 42h22M15 66h22M59 30h22M59 42h22M59 66h22"/>
+          <path class="s-ink" d="M15 54h14"/><path class="s-st" d="M59 54h22" style="stroke-width:3"/>
+          <rect class="a-scan" x="5" y="24" width="86" height="12" rx="6"/>
+        </svg></div>
+        <h2 tabindex="-1">משווים</h2>
+      </div>
+      <p class="lead">הניחו את שני הפתרונות זה ליד זה, ועברו שורה אחר שורה.</p>
+      <fieldset>
+        <legend>מצאתם הבדלים שמשנים את התוצאה?</legend>
+        <label class="opt"><input type="radio" name="diff" id="diff-yes" value="yes"><span class="box"><span><span class="name">כן, יש הבדלים</span><span class="desc">בתשובה מהבוחן יש טעות אחת או יותר</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-x"/></svg></span></span></label>
+        <label class="opt"><input type="radio" name="diff" id="diff-no" value="no"><span class="box"><span><span class="name">לא, אין הבדלים</span><span class="desc">התשובה מהבוחן נכונה: בלי טעויות, ובלי שינויים שמשפיעים על הפלט</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg></span></span></label>
+      </fieldset>
+      <div class="reveal" id="diff-more">
+        <div class="field">
+          <span class="label">הטעויות שמצאתם</span>
+          <div id="errs" class="stack" style="gap:12px"></div>
+          <button type="button" class="ghost small" id="add-err">עוד טעות</button>
+        </div>
+        <div class="field">
+          <label class="label" for="f-breakin">קלט שעבורו התשובה מהבוחן נותנת פלט שגוי</label>
+          <input type="text" class="code" id="f-breakin" data-k="breakIn" autocomplete="off">
+          <p class="hint">אם התשובה מהבוחן לא מתקמפלת בכלל, כתבו כאן: כל קלט.</p>
+        </div>
+        <div class="field">
+          <label class="label" for="f-breakwhy">מה התשובה מהבוחן הייתה מדפיסה עבור הקלט הזה, ומה היה צריך להיות מודפס?</label>
+          <textarea id="f-breakwhy" data-k="breakWhy"></textarea>
+          <p class="hint">לדוגמה: הייתה מדפיסה 510, והיה צריך להיות מודפס 470.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 grade -->
+    <section class="screen" data-step="4">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <rect class="s-ln" x="12" y="20" width="72" height="12" rx="6" style="fill:var(--line);stroke:none"/><rect class="s-fillc a-bar" x="12" y="20" width="72" height="12" rx="6"/>
+          <rect class="s-ln" x="12" y="42" width="72" height="12" rx="6" style="fill:var(--line);stroke:none"/><rect class="s-fillc a-bar b2" x="12" y="42" width="44" height="12" rx="6"/>
+          <rect class="s-ln" x="12" y="64" width="72" height="12" rx="6" style="fill:var(--line);stroke:none"/><rect class="s-fillc a-bar b3" x="12" y="64" width="60" height="12" rx="6"/>
+        </svg></div>
+        <h2 tabindex="-1">נותנים ציון</h2>
+      </div>
+      <p class="lead">עברו על <strong>התשובה מהבוחן</strong>, וסמנו כל סעיף במחוון של <strong id="rub-ver"></strong>.</p>
+      <div id="rubric"></div>
+      <div class="score" aria-live="polite"><span>הציון שיצא</span><span><b id="score">0</b> מתוך 100</span></div>
+    </section>
+
+    <!-- reflection -->
+    <section class="screen" data-step="6">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <g class="s-st a-rays" style="stroke-width:4"><path d="M48 4v7M17 20l6 5M79 20l-6 5M8 48h7M81 48h7"/></g>
+          <path class="s-soft a-glow" d="M48 18a21 21 0 0 0-12.5 38c2.3 1.7 3.5 4.2 3.5 7h18c0-2.8 1.2-5.3 3.5-7A21 21 0 0 0 48 18z"/>
+          <path class="s-ink" d="M40 72h16M43 81h10"/>
+        </svg></div>
+        <h2 tabindex="-1">עוצרים לחשוב</h2>
+      </div>
+      <p class="note" data-page="0">זה החלק החשוב במטלה. אין כאן תשובות נכונות או שגויות, ואין הגבלה על אורך התשובה. כתבו בכנות, כי זה בשבילכם.</p>
+      <div id="reflect" class="stack"></div>
+    </section>
+
+    <!-- 7 feedback on the quiz and the task -->
+    <section class="screen" data-step="7">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <rect class="s-paper" x="20" y="14" width="56" height="70" rx="7"/>
+          <rect class="s-fillc" x="36" y="8" width="24" height="12" rx="4"/>
+          <path class="s-ln" d="M44 36h22M44 52h22M44 68h22"/>
+          <path class="s-st a-type" style="stroke-width:4" d="M28 36l4 4 7-8"/><path class="s-st a-type t2" style="stroke-width:4" d="M28 52l4 4 7-8"/><path class="s-st a-type t3" style="stroke-width:4" d="M28 68l4 4 7-8"/>
+        </svg></div>
+        <h2 tabindex="-1">משוב על הבוחן</h2>
+      </div>
+      <p class="lead">כמה שאלות קצרות על הבוחן ועל המטלה הזאת. התשובות לא משפיעות על הציון.</p>
+      <div id="feedback" class="stack"></div>
+    </section>
+
+    <!-- teaching survey -->
+    <section class="screen" data-step="8">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <path class="s-paper" d="M16 16h64a7 7 0 0 1 7 7v36a7 7 0 0 1-7 7H46L28 82V66H16a7 7 0 0 1-7-7V23a7 7 0 0 1 7-7z"/>
+          <circle class="a-dot" cx="32" cy="41" r="5"/><circle class="a-dot d2" cx="48" cy="41" r="5"/><circle class="a-dot d3" cx="64" cy="41" r="5"/>
+        </svg></div>
+        <h2 tabindex="-1">סקר הוראה</h2>
+      </div>
+      <div class="bridge" data-page="0">
+        <p><strong>עכשיו התור שלי לקבל משוב.</strong></p>
+        <p>אצלכם יש יום הורים, שבו עוצרים ובודקים איך הולך. גם לי, כמורה, כדאי לעצור מדי פעם ולשמוע מכם איך אני מלמד. זאת הזדמנות טובה.</p>
+        <p>השאלות הבאות הן על השיעורים ועליי, לא על הבוחן. תשובות כנות יעזרו לי ללמד אתכם טוב יותר, והן לא משפיעות על שום ציון.</p>
+      </div>
+      <div id="teach" class="stack"></div>
+    </section>
+
+    <!-- 8 choice -->
+    <section class="screen" data-step="5">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <g class="a-roll"><rect class="s-paper" x="24" y="24" width="48" height="48" rx="10"/>
+          <circle class="s-fillc" cx="37" cy="37" r="4.5"/><circle class="s-fillc" cx="48" cy="48" r="4.5"/><circle class="s-fillc" cx="59" cy="59" r="4.5"/></g>
+        </svg></div>
+        <h2 tabindex="-1">מחליטים</h2>
+      </div>
+      <p class="lead">הציון שיצא בבוחן: <strong id="final-score"></strong>. מה עושים איתו?</p>
+      <fieldset>
+        <legend>הבחירה שלי</legend>
+        <label class="opt"><input type="radio" name="choice" id="ch-keep" value="keep"><span class="box"><span><span class="name">משאירים את הציון</span><span class="desc">המטלה מסתיימת כאן</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg></span></span></label>
+        <label class="opt"><input type="radio" name="choice" id="ch-draw" value="draw"><span class="box"><span><span class="name">מגרילים שאלה חדשה</span><span class="desc">שאלה מאחד משני הנוסחים האחרים, עם שינוי קטן. הגרלה חד-פעמית.</span></span><span class="side"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dice"/></svg></span></span></label>
+      </fieldset>
+      <p class="hint">מי שמגריל יקבל את השאלה בסוף, אחרי שליחת המטלה.</p>
+    </section>
+
+    <!-- done -->
+    <section class="screen" data-step="9">
+      <div class="head">
+        <div class="hero"><svg class="scene" viewBox="0 0 96 96" aria-hidden="true">
+          <circle class="s-soft" cx="48" cy="50" r="28"/>
+          <path class="s-st a-check" d="M35 51l9 9 17-21"/>
+          <circle class="s-fillc a-conf" cx="14" cy="24" r="4"/><circle class="s-fillc a-conf" cx="82" cy="20" r="3" style="animation-delay:.3s"/><circle class="s-fillc a-conf" cx="86" cy="62" r="4" style="animation-delay:.6s"/><circle class="s-fillc a-conf" cx="10" cy="66" r="3" style="animation-delay:.9s"/>
+        </svg></div>
+        <h2 tabindex="-1">ההגשה נשמרה</h2>
+      </div>
+      <p class="lead" id="done-text"></p>
+      <p class="preview" id="done-preview" hidden>תצוגה מקדימה: כאן ההגשה לא נשמרת בפועל.</p>
+      <div class="pvq" id="pv-q" hidden><span>הצגת השאלה להגרלה:</span>
+        <button type="button" class="ghost small" data-q="א">נוסח א'</button>
+        <button type="button" class="ghost small" data-q="ב">נוסח ב'</button>
+        <button type="button" class="ghost small" data-q="ג">נוסח ג'</button>
+        <button type="button" class="ghost small" data-q="">בלי שאלה</button>
+      </div>
+      <div class="reveal" id="retake">
+        <div class="q" id="q-card"></div>
+        <div class="field">
+          <label class="label" for="f-rcode">הפתרון לשאלה שהוגרלה</label>
+          <textarea class="code" id="f-rcode" data-k="retakeCode" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+        </div>
+        <div class="field">
+          <label class="label" for="f-rout">פלט ההרצה על הדוגמה שבשאלה</label>
+          <textarea class="code" id="f-rout" data-k="retakeOut" style="min-height:110px" spellcheck="false"></textarea>
+        </div>
+        <p class="error" id="r-error" role="alert"></p>
+        <button type="button" class="main" id="r-send">שולחים את הפתרון</button>
+        <p class="ok" id="r-ok" hidden>הפתרון נשמר.</p>
+        <p class="hint">אפשר לסגור את הדף ולחזור אליו מאותו מכשיר. השאלה תחכה כאן.</p>
+      </div>
+    </section>
+
+    <div id="foot" style="display:flex;flex-direction:column;gap:12px;margin-top:20px">
+      <div class="pips" id="pips" hidden></div>
+      <p class="error" id="error" role="alert"></p>
+      <div class="nav">
+        <button type="button" class="ghost" id="back">הקודם</button>
+        <button type="button" class="main" id="next">מתחילים</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>רוני רובן, ויצו נהלל</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  /* כאן מדביקים, בין המירכאות, את כתובת הפריסה מגוגל שמסתיימת ב-exec */
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzBonq-3-2Q-LSZYd7q4xqefGFwba_Xd4nxpx-5DUkdTld5_EvCwgc48qvSudQuFDiRQA/exec';
+
+  var GAS = (typeof google !== 'undefined') && google.script && google.script.run;
+  function post(action,data,ok,fail){
+    fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,data:data})})
+      .then(function(r){return r.json();})
+      .then(function(j){if(j && j.ok) ok(j); else fail();})
+      .catch(function(){fail();});
+  }
+  /* מצב תצוגה: בלי כתובת פריסה, או כשמוסיפים #preview לסוף כתובת הדף */
+  var PREVIEW = (!GAS && !API_URL) || location.hash === '#preview';
+  var KEY = 'quiz-review-v3';
+  var LAST = 8, DONE = 9, CHOICE = 5;
+  function pages(step){return step===2?2:(QS[step]?QS[step].pages.length:1);}
+
+  var VERSION_NAMES = {'א':"נוסח א' – מכונת הכרטיסים",'ב':"נוסח ב' – מעבדת המספרים",'ג':"נוסח ג' – קרב ההישרדות"};
+  var SKELETON = 'שלד תוכנית תקין: מחלקה, main, import ו-Scanner';
+
+  var RUBRICS = {
+    'א':[
+      [SKELETON,6],
+      ['משתנים מאותחלים נכון: צוברים ומקסימום',10],
+      ['קליטה ראשונה לפני הלולאה, תנאי שנעצר ב-0, וקליטה חוזרת בסוף כל סיבוב',18],
+      ['קליטת שני הנתונים לכל לקוח',6],
+      ['חישוב המחיר לפי סוג הכרטיס',12],
+      ['הנחה של 15% לארבעה כרטיסים ומעלה',12],
+      ['הדפסת התשלום לכל לקוח',6],
+      ['צבירת סך ההכנסות',8],
+      ['מציאת התשלום הגבוה ביותר',12],
+      ['ספירת כרטיסי ה-VIP שנמכרו',6],
+      ['שמות משתנים משמעותיים והזחה תקינה',4]
+    ],
+    'ב':[
+      [SKELETON,6],
+      ['קליטת המספר',6],
+      ['מונה מאותחל ל-1 לפני הלולאה, תנאי עד המספר ולא כולל, וקידום המונה בכל סיבוב',22],
+      ['בדיקת חלוקה ללא שארית',18],
+      ['צבירת סכום המחלקים, מאותחל ל-0',14],
+      ['סיווג נכון לשלושת הסוגים',22],
+      ['פלט בנוסח המדויק',8],
+      ['שמות משתנים משמעותיים והזחה תקינה',4]
+    ],
+    'ג':[
+      [SKELETON,6],
+      ['אתחול נקודות החיים ל-500 ומונה הסיבובים',8],
+      ['קליטת קוד ראשון לפני הלולאה, תנאי כפול, וקליטה חוזרת בסוף כל סיבוב',18],
+      ['פירוק הקוד לשלוש ספרות',16],
+      ['שלוש ספרות זהות: תוספת של 50',10],
+      ['אחרת, ספרות בסדר עולה ממש: הפחתת המכפלה',12],
+      ['בכל מקרה אחר: הפחתת הסכום',8],
+      ['הדפסת יתרת החיים בסוף כל סיבוב',6],
+      ['ספירת הסיבובים ששוחקו',6],
+      ['הודעת ניצחון או הפסד בסיום',6],
+      ['שמות משתנים משמעותיים והזחה תקינה',4]
+    ]
+  };
+
+  /* h = column header in the sheet, q = the question shown to the student */
+  var REFLECT = [
+    {num:'א',title:'לפני הבוחן',sub:'הלמידה וההכנה',qs:[
+      {k:'p_how',h:'הכנה: דרכים',type:'multi',q:'איך התכוננת לבוחן? אפשר לסמן כמה תשובות.',
+        opts:['פתרון תרגילים במחשב','פתרון תרגילים על דף','קריאת סיכומים או מצגות','חזרה על תרגילים מהשיעורים','למידה עם חברים','למידה בעזרת בינה מלאכותית','צפייה בסרטונים','לא התכוננתי']},
+      {k:'p_time',h:'הכנה: זמן',type:'one',q:'כמה זמן הוקדש להכנה?',opts:['לא התכוננתי','עד חצי שעה','בין חצי שעה לשעה','בין שעה לשעתיים','יותר משעתיים']},
+      {k:'p_when',h:'הכנה: מתי',type:'one',q:'מתי נעשתה רוב ההכנה?',opts:['כמה ימים לפני','יום לפני','בבוקר הבוחן','לא התכוננתי']},
+      {k:'p_class',h:'הלמידה בשיעורים',type:'text',brk:true,q:'אילו נושאים מהשיעורים היו ברורים לך לפני הבוחן, ואילו פחות?'},
+      {k:'p_open',h:'הכנה: מה עזר',type:'text',q:'מה בהכנה עזר לך הכי הרבה? ואם לא התכוננת, מה מנע זאת?'}
+    ]},
+    {num:'ב',title:'ביום הבוחן',sub:'המוכנות והבוחן עצמו',qs:[
+      {k:'d_ready',h:'מוכנות בבוקר',type:'multi',q:'מה מהדברים הבאים קרה בבוקר הבוחן? אפשר לסמן כמה תשובות.',
+        opts:['היה לי ציוד כתיבה','הסיכומים והחומר שמותר להביא היו איתי','הגעתי בזמן','ידעתי על מה הבוחן','עשיתי חזרה קצרה בבוקר','שום דבר מאלה']},
+      {k:'d_time',h:'הזמן בבוחן',type:'one',q:'איך הסתדר הזמן בבוחן?',opts:['נשאר זמן לבדוק את הפתרון','הזמן הספיק בדיוק','הזמן לא הספיק']},
+      {k:'d_approach',h:'הגישה לשאלה',type:'text',q:'איך ניגשת לשאלה בבוחן, שלב אחרי שלב? אם היה מקום שבו נתקעת, איפה?'},
+      {k:'d_main',h:'הטעות המרכזית או מה עזר',type:'text',q:function(){
+        return S.diff==='yes'
+          ? 'מה הייתה הטעות המרכזית, ומה לדעתך גרם לה: חוסר בידע, חוסר תשומת לב, אי הבנה של השאלה או לחץ זמן?'
+          : 'מה לדעתך עזר לך להגיע לפתרון נכון?';}}
+    ]},
+    {num:'ג',title:'מכאן והלאה',sub:'מה לוקחים לבוחן הבא',qs:[
+      {k:'n_surprise',h:'מה הפתיע',type:'text',q:'האם משהו הפתיע אותך כשהשווית בין הפתרונות, או כשיצא הציון? מה?'},
+      {k:'n_change',h:'מה לעשות אחרת',type:'text',q:'מה הדבר האחד שהכי חשוב לך לעשות אחרת לקראת הבוחן הבא, ואיך זה ייראה בפועל?'},
+      {k:'n_letter',h:'מכתב לעצמי',type:'text',big:true,q:'כתיבה חופשית: מכתב קצר לעצמך, שייפתח רגע לפני הבוחן הבא. מה חשוב לך לזכור?'}
+    ]}
+  ];
+  /* a question marked brk starts a new page, so no page gets too long */
+  var RPAGES = [];
+  REFLECT.forEach(function(part){
+    var cur=null;
+    part.qs.forEach(function(q){
+      if(!cur || q.brk){cur={part:{num:part.num,title:part.title+(cur?' (המשך)':''),sub:part.sub},qs:[]};RPAGES.push(cur);}
+      cur.qs.push(q);
+    });
+  });
+  function sc(k,h,q){return {k:k,h:h,type:'scale',q:q};}
+  var FPAGES = [
+    {qs:[
+      sc('f_clear','בוחן: הבנת הדרישה','הבנתי מה השאלה בבוחן דורשת ממני'),
+      sc('f_similar','בוחן: דמיון לתרגול','השאלה בבוחן דמתה לתרגילים שפתרנו בשיעורים'),
+      {k:'f_level',h:'בוחן: רמת קושי',type:'one',q:'רמת הקושי של הבוחן הייתה:',opts:['קלה מדי','קלה','מתאימה','קשה','קשה מדי']},
+      sc('f_instr','מטלה: הוראות','ההוראות במטלה הזאת היו ברורות לי'),
+      sc('f_task','מטלה: תרומה','בזכות המטלה הזאת ברור לי יותר מה כבר מובן לי ומה עוד לא'),
+      {k:'f_len',h:'מטלה: אורך',type:'one',q:'אורך המטלה הזאת היה:',opts:['קצר מדי','מתאים','ארוך מדי']},
+      {k:'f_open',h:'בוחן ומטלה: הצעות',type:'text',q:'לקראת הפעם הבאה: מה כדאי לי לשנות בבוחן, ומה במטלה שאחריו?'}
+    ]}
+  ];
+  var TPAGES = [
+    {qs:[]},
+    {part:{num:'1',title:'השיעורים',sub:'איך אני מלמד'},qs:[
+      sc('t_explain','סקר: הסברים','ההסברים בשיעור ברורים לי'),
+      {k:'t_pace',h:'סקר: קצב',type:'one',q:'קצב השיעורים:',opts:['איטי מדי','קצת איטי','מתאים','קצת מהיר','מהיר מדי']},
+      sc('t_practice','סקר: זמן תרגול','יש בשיעור מספיק זמן לתרגול עצמאי'),
+      sc('t_examples','סקר: דוגמאות','הדוגמאות שמוצגות בשיעור עוזרות לי להבין את החומר'),
+      sc('t_materials','סקר: הוראות במטלות','ההוראות במטלות ברורות לי')
+    ]},
+    {part:{num:'2',title:'האווירה והתמיכה',sub:'איך מרגישים בכיתה'},qs:[
+      sc('t_ask','סקר: נוח לשאול','נוח לי לשאול שאלות בשיעור'),
+      sc('t_help','סקר: עזרה','כשמשהו לא ברור לי, קל לי לקבל עזרה בשיעור'),
+      sc('t_feedback','סקר: משוב','המשוב על העבודה שלי עוזר לי להשתפר'),
+      sc('t_climate','סקר: אווירה','האווירה בכיתה מאפשרת לי להתרכז')
+    ]},
+    {part:{num:'3',title:'המקצוע ואני',sub:'מדעי המחשב מבחינתי'},qs:[
+      sc('t_conf','סקר: ביטחון','יש לי ביטחון ביכולת שלי לכתוב תוכנית בעצמי'),
+      sc('t_interest','סקר: עניין','מעניין לי בשיעורי מדעי המחשב'),
+      sc('t_expect','סקר: ציפיות','ברור לי מה נדרש ממני כדי להצליח במקצוע')
+    ]},
+    {part:{num:'4',title:'במילים שלכם',sub:'מה לשמור ומה לשנות'},qs:[
+      {k:'t_keep',h:'סקר: להמשיך',type:'text',q:'מה בשיעורים עוזר לך ללמוד, וכדאי שאמשיך לעשות?'},
+      {k:'t_change',h:'סקר: לשנות',type:'text',q:'מה כדאי שאשנה או אעשה אחרת?'},
+      {k:'t_more',h:'סקר: משהו נוסף',type:'text',optional:true,q:'משהו נוסף שחשוב לך שאדע? (לא חובה)'}
+    ]}
+  ];
+  var QS = {6:{box:'reflect',pages:RPAGES},7:{box:'feedback',pages:FPAGES},8:{box:'teach',pages:TPAGES}};
+
+  var RULE = '<p><strong>כמו בבוחן:</strong> תוכנית מלאה ותקינה, בלי מערכים ובלי פעולות עזר.</p>';
+  function ex(rows){
+    var h='<div class="ex"><table><tr><th>קלט</th><th>פלט צפוי</th></tr>';
+    for(var i=0;i<rows.length;i++) h+='<tr><td class="io">'+rows[i][0]+'</td><td>'+rows[i][1]+'</td></tr>';
+    return h+'</table></div>';
+  }
+  var QUESTIONS = {
+    'א':'<h3>מכונת הכרטיסים, גרסה חדשה</h3>'+
+      '<p>בקולנוע מוצבת מכונה אוטומטית למכירת כרטיסים. הלקוחות ניגשים אליה בזה אחר זה.</p>'+
+      '<p>התוכנית קולטת עבור כל לקוח שני מספרים שלמים:</p>'+
+      '<ol><li>כמות הכרטיסים, מספר שלם חיובי.</li><li>סוג הכרטיס: 1 לכרטיס רגיל (40 ש"ח), 2 לכרטיס VIP (75 ש"ח).</li></ol>'+
+      '<p>הקליטה מסתיימת כשהכמות שנקלטה היא 0. במקרה כזה לא קולטים סוג.</p>'+
+      '<p><strong>כלל ההנחה:</strong> הזמנה שסכומה גדול מ-200 ש"ח מקבלת הנחה של 20%.</p>'+
+      '<p>התוכנית מדפיסה:</p>'+
+      '<ol><li>לכל לקוח: התשלום הסופי.</li><li>בסיום: סך ההכנסות מכל הלקוחות.</li><li>בסיום: מספר הלקוחות שקיבלו הנחה.</li><li>בסיום: מספר כרטיסי ה-VIP שנמכרו.</li></ol>'+
+      ex([['2 1','תשלום = 80'],['5 2','תשלום = 300'],['4 1','תשלום = 160'],['0','סך ההכנסות = 540<br>לקוחות שקיבלו הנחה = 1<br>כרטיסי VIP שנמכרו = 5']])+RULE,
+    'ב':'<h3>מעבדת המספרים, גרסה חדשה</h3>'+
+      '<p>מחלק אמיתי של מספר שלם חיובי הוא כל מספר שלם חיובי שקטן ממנו ממש ומחלק אותו ללא שארית. לדוגמה, המחלקים האמיתיים של 12 הם 1, 2, 3, 4, 6, וסכומם 16.</p>'+
+      '<p>מספר שלם חיובי מסווג לפי סכום מחלקיו האמיתיים:</p>'+
+      '<ul><li><strong>מספר ראשוני:</strong> הסכום שווה ל-1.</li><li><strong>מספר משוכלל:</strong> הסכום שווה למספר עצמו.</li><li><strong>מספר שופע:</strong> הסכום גדול ממש מהמספר עצמו.</li><li><strong>מספר חסר:</strong> כל מקרה אחר.</li></ul>'+
+      '<p>התוכנית קולטת מספר שלם חיובי, ומדפיסה את סכום מחלקיו האמיתיים ואת הסיווג שלו.</p>'+
+      ex([['6','סכום המחלקים = 6<br>מספר משוכלל'],['12','סכום המחלקים = 16<br>מספר שופע'],['9','סכום המחלקים = 4<br>מספר חסר'],['7','סכום המחלקים = 1<br>מספר ראשוני']])+RULE,
+    'ג':'<h3>קרב ההישרדות, גרסה חדשה</h3>'+
+      '<p>במשחק מחשב השחקן מתחיל עם 500 נקודות חיים. בכל סיבוב השחקן מקליד קוד תקיפה: מספר שלם חיובי תלת-ספרתי, בין 100 ל-999.</p>'+
+      '<p>המשחק נמשך כל עוד נקודות החיים גדולות ממש מ-0, וגם השחקן לא הקליד 0. כשמוקלד 0, המשחק נעצר מיד.</p>'+
+      '<p>בכל סיבוב ההשפעה נקבעת לפי שלוש ספרות הקוד: ספרת המאות, ספרת העשרות וספרת האחדות.</p>'+
+      '<ul><li>אם שלוש הספרות זהות (לדוגמה 444): נקודות החיים עולות ב-50.</li><li>אחרת, אם הספרות בסדר יורד ממש משמאל לימין (לדוגמה 532): פגיעה קריטית, ונקודות החיים יורדות במכפלת שלוש הספרות.</li><li>בכל מקרה אחר: נקודות החיים יורדות בסכום שלוש הספרות.</li></ul>'+
+      '<p>התוכנית מדפיסה:</p>'+
+      '<ol><li>בסוף כל סיבוב: יתרת נקודות החיים.</li><li>בסיום המשחק: "ניצח" אם נותרו נקודות חיים, אחרת "הפסיד".</li><li>בסיום המשחק: מספר הפגיעות הקריטיות.</li></ol>'+
+      ex([['532','יתרת חיים = 470'],['444','יתרת חיים = 520'],['217','יתרת חיים = 510'],['0','ניצח<br>מספר פגיעות קריטיות = 1']])+RULE
+  };
+
+  var S = {step:0,name:'',version:'',code:'',t1in:'',t1out:'',t2in:'',t2out:'',diff:'',
+           errors:[{was:'',fix:'',type:''}],breakIn:'',breakWhy:'',rubric:{},rubricVer:'',
+           ans:{},sub:0,choice:'',submitted:false,drawn:'',retakeCode:'',retakeOut:'',retakeSent:false};
+  var photos = [];
+
+  function $(id){return document.getElementById(id);}
+  function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+  function save(){
+    if(PREVIEW) return;
+    try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  }
+  function savePhotos(){
+    if(PREVIEW) return;
+    try{localStorage.setItem(KEY+'-photos',JSON.stringify(photos));}catch(e){try{localStorage.removeItem(KEY+'-photos');}catch(e2){}}
+  }
+  if(!PREVIEW) try{
+    var d=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(d){for(var k in S){if(Object.prototype.hasOwnProperty.call(d,k)) S[k]=d[k];}}
+    var p=JSON.parse(localStorage.getItem(KEY+'-photos')||'null');
+    if(p && p.length) photos=p;
+  }catch(e){}
+  if(!S.errors || !S.errors.length) S.errors=[{was:'',fix:'',type:''}];
+  if(!S.rubric) S.rubric={};
+  if(!S.ans) S.ans={};
+
+  /* generic text binding */
+  var bound=document.querySelectorAll('[data-k]');
+  for(var i=0;i<bound.length;i++){
+    bound[i].value=S[bound[i].getAttribute('data-k')]||'';
+    bound[i].addEventListener('input',function(){S[this.getAttribute('data-k')]=this.value;save();});
+  }
+  function bindRadio(name,key,after){
+    var rs=document.querySelectorAll('input[name="'+name+'"]');
+    for(var i=0;i<rs.length;i++){
+      rs[i].checked=(rs[i].value===S[key]);
+      rs[i].addEventListener('change',function(){S[key]=this.value;save();if(after)after();});
+    }
+  }
+  bindRadio('version','version');
+  bindRadio('diff','diff',showDiff);
+  bindRadio('choice','choice');
+  function showDiff(){ $('diff-more').classList.toggle('on',S.diff==='yes'); }
+
+  /* error entries */
+  var TYPES=['תחביר','לוגיקה','הבנת השאלה','חוסר זמן','אחר'];
+  function renderErrs(){
+    var box=$('errs');box.textContent='';
+    S.errors.forEach(function(er,idx){
+      var w=el('div','sub');
+      w.appendChild(el('h3','', 'טעות '+(idx+1)));
+      w.appendChild(errField('מה היה כתוב בבוחן','was',er,idx));
+      w.appendChild(errField('מה נכון','fix',er,idx));
+      var f=el('div','field');
+      var l=el('label','hint','סוג הטעות');l.htmlFor='err-type-'+idx;
+      var s=document.createElement('select');s.id='err-type-'+idx;
+      var o=el('option','','בחירה');o.value='';s.appendChild(o);
+      TYPES.forEach(function(t){var op=el('option','',t);op.value=t;s.appendChild(op);});
+      s.value=er.type||'';
+      s.addEventListener('change',function(){er.type=this.value;save();});
+      f.appendChild(l);f.appendChild(s);w.appendChild(f);
+      if(S.errors.length>1){
+        var b=el('button','ghost small','הסרת הטעות');b.type='button';
+        b.addEventListener('click',function(){S.errors.splice(idx,1);save();renderErrs();});
+        w.appendChild(b);
+      }
+      box.appendChild(w);
+    });
+    $('add-err').hidden = S.errors.length>=6;
+  }
+  function errField(label,key,er,idx){
+    var f=el('div','field');
+    var l=el('label','hint',label);l.htmlFor='err-'+key+'-'+idx;
+    var t=document.createElement('input');t.type='text';t.id='err-'+key+'-'+idx;t.autocomplete='off';
+    t.value=er[key]||'';
+    t.addEventListener('input',function(){er[key]=this.value;save();});
+    f.appendChild(l);f.appendChild(t);return f;
+  }
+  $('add-err').addEventListener('click',function(){S.errors.push({was:'',fix:'',type:''});save();renderErrs();});
+
+  /* photos */
+  function renderThumbs(){
+    var box=$('thumbs');box.textContent='';
+    photos.forEach(function(src,idx){
+      var w=el('div','thumb');
+      var im=document.createElement('img');im.src=src;im.alt='תמונה '+(idx+1)+' של התשובה מהבוחן';
+      var b=el('button','','×');b.type='button';b.setAttribute('aria-label','הסרת תמונה '+(idx+1));
+      b.addEventListener('click',function(){photos.splice(idx,1);savePhotos();renderThumbs();});
+      w.appendChild(im);w.appendChild(b);box.appendChild(w);
+    });
+  }
+  function shrink(file,cb){
+    var fr=new FileReader();
+    fr.onerror=function(){cb(null);};
+    fr.onload=function(){
+      var im=new Image();
+      im.onerror=function(){cb(null);};
+      im.onload=function(){
+        var max=1400,w=im.naturalWidth,h=im.naturalHeight,r=Math.min(1,max/Math.max(w,h));
+        var c=document.createElement('canvas');c.width=Math.round(w*r);c.height=Math.round(h*r);
+        try{c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',0.8));}catch(e){cb(null);}
+      };
+      im.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  }
+  $('f-photo').addEventListener('change',function(){
+    var files=Array.prototype.slice.call(this.files||[]);this.value='';
+    var err=$('error');err.textContent='';
+    (function nextFile(){
+      if(!files.length){savePhotos();renderThumbs();return;}
+      if(photos.length>=3){err.textContent='אפשר להעלות עד שלוש תמונות. כדי להחליף, מסירים תמונה קיימת.';savePhotos();renderThumbs();return;}
+      shrink(files.shift(),function(src){
+        if(src) photos.push(src); else err.textContent='אחת התמונות לא נקראה. אפשר לצלם שוב או לבחור קובץ אחר.';
+        nextFile();
+      });
+    })();
+  });
+
+  /* rubric */
+  function ptsText(idx){
+    var it=(RUBRICS[S.version]||[])[idx],v=parseFloat(S.rubric[idx]);
+    if(!it || isNaN(v)) return '';
+    return Math.round(it[1]*v)+' מתוך '+it[1];
+  }
+  function renderRubric(){
+    if(S.rubricVer!==S.version){S.rubric={};S.rubricVer=S.version;save();}
+    $('rub-ver').textContent=VERSION_NAMES[S.version]||'';
+    var items=RUBRICS[S.version]||[],box=$('rubric');box.textContent='';
+    items.forEach(function(it,idx){
+      var w=el('div','rub');
+      var t=el('div','txt');
+      t.appendChild(el('span','',it[0]));
+      var pts=el('span','pts',ptsText(idx));t.appendChild(pts);
+      w.appendChild(t);
+      var seg=el('div','seg');seg.setAttribute('role','radiogroup');seg.setAttribute('aria-label',it[0]);
+      [['1','מלא'],['0.5','חלקי'],['0','חסר']].forEach(function(o){
+        var l=document.createElement('label');
+        var r=document.createElement('input');r.type='radio';r.name='rub-'+idx;r.id='rub-'+idx+'-'+o[0].replace('.','_');r.value=o[0];
+        r.checked=(String(S.rubric[idx])===o[0]);
+        r.addEventListener('change',function(){
+          S.rubric[idx]=this.value;save();showScore();
+          pts.textContent=ptsText(idx);pts.classList.remove('new');void pts.offsetWidth;pts.classList.add('new');
+        });
+        l.appendChild(r);l.appendChild(el('span','',o[1]));seg.appendChild(l);
+      });
+      w.appendChild(seg);box.appendChild(w);
+    });
+    showScore();
+  }
+  function score(){
+    var items=RUBRICS[S.version]||[],sum=0;
+    for(var i=0;i<items.length;i++){var v=parseFloat(S.rubric[i]);if(!isNaN(v)) sum+=items[i][1]*v;}
+    return Math.round(sum);
+  }
+  function rubricDone(){
+    var items=RUBRICS[S.version]||[];
+    for(var i=0;i<items.length;i++){if(S.rubric[i]===undefined||S.rubric[i]==='') return false;}
+    return items.length>0;
+  }
+  function showScore(){$('score').textContent=score();}
+
+  /* question renderer for reflection and survey */
+  function qText(q){return typeof q.q==='function'?q.q():q.q;}
+  function renderQ(q){
+    var id='q-'+q.k,f;
+    if(q.type==='text'){
+      f=el('div','field');
+      var l=el('label','label',qText(q));l.htmlFor=id;
+      var t=document.createElement('textarea');t.id=id;if(q.big)t.className='big';
+      t.value=S.ans[q.k]||'';
+      t.addEventListener('input',function(){S.ans[q.k]=this.value;save();});
+      f.appendChild(l);f.appendChild(t);return f;
+    }
+    f=document.createElement('fieldset');
+    f.appendChild(el('legend','',qText(q)));
+    if(q.type==='scale'){
+      var sc=el('div','scale');
+      for(var n=1;n<=5;n++){(function(n){
+        var l=document.createElement('label');
+        var r=document.createElement('input');r.type='radio';r.name=id;r.id=id+'-'+n;r.value=String(n);
+        r.checked=(String(S.ans[q.k])===String(n));
+        r.addEventListener('change',function(){S.ans[q.k]=this.value;save();});
+        l.appendChild(r);l.appendChild(el('span','',String(n)));sc.appendChild(l);
+      })(n);}
+      f.appendChild(sc);
+      var ends=el('div','ends');ends.appendChild(el('span','','1 = בכלל לא נכון'));ends.appendChild(el('span','','5 = נכון מאוד'));
+      f.appendChild(ends);return f;
+    }
+    var box=el('div','pills'),multi=q.type==='multi';
+    q.opts.forEach(function(o,idx){
+      var l=document.createElement('label');
+      var r=document.createElement('input');r.type=multi?'checkbox':'radio';r.name=id;r.id=id+'-'+idx;r.value=o;
+      var cur=S.ans[q.k];
+      r.checked=multi?(Array.isArray(cur)&&cur.indexOf(o)>-1):(cur===o);
+      r.addEventListener('change',function(){
+        if(multi){
+          var a=Array.isArray(S.ans[q.k])?S.ans[q.k].slice():[];
+          var at=a.indexOf(o);
+          if(this.checked && at<0) a.push(o);
+          if(!this.checked && at>-1) a.splice(at,1);
+          S.ans[q.k]=a;
+        }else S.ans[q.k]=o;
+        save();
+      });
+      l.appendChild(r);l.appendChild(el('span','',o));box.appendChild(l);
+    });
+    f.appendChild(box);return f;
+  }
+  function renderQS(step){
+    var cfg=QS[step],box=$(cfg.box),page=cfg.pages[S.sub]||cfg.pages[0];
+    box.textContent='';
+    if(page.part){
+      var b=el('div','part');
+      b.appendChild(el('span','num',page.part.num));
+      var t=document.createElement('div');t.appendChild(el('strong','',page.part.title));t.appendChild(el('small','',page.part.sub));
+      b.appendChild(t);box.appendChild(b);
+    }
+    page.qs.forEach(function(q){box.appendChild(renderQ(q));});
+  }
+  function missing(list){
+    for(var i=0;i<list.length;i++){
+      var q=list[i],v=S.ans[q.k];
+      if(q.optional) continue;
+      if(q.type==='multi'){if(!Array.isArray(v)||!v.length) return q;}
+      else if(q.type==='text'){if((v||'').trim().length<3) return q;}
+      else if(!v) return q;
+    }
+    return null;
+  }
+  function allQs(){var a=[];[6,7,8].forEach(function(st){QS[st].pages.forEach(function(p){a=a.concat(p.qs);});});return a;}
+  function ansText(q){var v=S.ans[q.k];return Array.isArray(v)?v.join(', '):(v||'');}
+
+  /* validation */
+  function words(s){return (s||'').trim().split(/\s+/).filter(Boolean);}
+  function filled(s){return (s||'').trim().length>0;}
+  function check(step){
+    var m;
+    if(step===0){
+      if(words(S.name).length<2) return 'חסר שם מלא. כתבו שם פרטי ושם משפחה.';
+      if(!S.version) return 'עוד לא נבחר נוסח. סמנו את הנוסח שפתרתם בבוחן.';
+    }
+    if(step===1){
+      if(!photos.length) return 'חסרה תמונה של התשובה מהבוחן. העלו לפחות תמונה אחת.';
+    }
+    if(step===2 && S.sub===0){
+      if((S.code||'').trim().length<20) return 'חסר הקוד החדש. הדביקו את התוכנית המלאה.';
+    }
+    if(step===2 && S.sub===1){
+      if(!filled(S.t1in)||!filled(S.t1out)) return 'בבדיקה 1 חסר קלט או פלט.';
+      if(!filled(S.t2in)||!filled(S.t2out)) return 'בבדיקה 2 חסר קלט או פלט.';
+    }
+    if(step===3){
+      if(!S.diff) return 'חסרה תשובה: מצאתם הבדלים או לא?';
+      if(S.diff==='yes'){
+        for(var i=0;i<S.errors.length;i++){
+          var e=S.errors[i];
+          if(!filled(e.was)||!filled(e.fix)||!e.type) return 'בטעות '+(i+1)+' חסר פרט. ממלאים מה היה כתוב, מה נכון, ואיזה סוג טעות זו.';
+        }
+        if(!filled(S.breakIn)) return 'חסר קלט שעבורו התשובה מהבוחן נותנת פלט שגוי.';
+        if(!filled(S.breakWhy)) return 'חסר הסבר: מה הייתה מדפיסה התשובה מהבוחן, ומה היה צריך להיות מודפס.';
+      }
+    }
+    if(step===4){
+      if(!rubricDone()) return 'נשארו סעיפים בלי סימון. לכל סעיף בוחרים מלא, חלקי או חסר.';
+    }
+    if(QS[step]){
+      m=missing((QS[step].pages[S.sub]||QS[step].pages[0]).qs);
+      if(m) return 'נשארה שאלה בלי תשובה: '+qText(m);
+    }
+    if(step===CHOICE){
+      if(!S.choice) return 'חסרה בחירה: להשאיר את הציון או להגריל שאלה.';
+    }
+    return '';
+  }
+
+  /* navigation */
+  var lis=document.querySelectorAll('#track li');
+  function setNextLabel(){
+    var n=$('next');
+    if(S.step===0) n.textContent='מתחילים';
+    else if(S.step===LAST && S.sub===pages(LAST)-1) n.textContent='שולחים את המטלה';
+    else n.textContent='ממשיכים';
+  }
+  function show(step,focus){
+    if(PREVIEW && !S.version && step>0){S.version='א';$('ver-a').checked=true;}
+    S.step=step;
+    var np=pages(step);
+    if(!(S.sub>=0) || S.sub>np-1) S.sub=0;
+    save();
+    var pg=document.querySelectorAll('.screen[data-step="'+step+'"] [data-page]');
+    for(var q0=0;q0<pg.length;q0++) pg[q0].hidden=(Number(pg[q0].getAttribute('data-page'))!==S.sub);
+    var pips=$('pips');pips.textContent='';pips.hidden=(np<2);
+    for(var q1=0;q1<np && np>1;q1++){var pi=document.createElement('i');if(q1<=S.sub)pi.className='on';pips.appendChild(pi);}
+    if(np>1) pips.appendChild(el('span','','חלק '+(S.sub+1)+' מתוך '+np));
+    var scr=document.querySelectorAll('.screen');
+    for(var i=0;i<scr.length;i++) scr[i].classList.toggle('on',Number(scr[i].getAttribute('data-step'))===step);
+    var t=Math.min(step,LAST);
+    for(var j=0;j<lis.length;j++){
+      lis[j].classList.toggle('done',j<t || step>LAST);
+      if(j===t && step<=LAST) lis[j].setAttribute('aria-current','step'); else lis[j].removeAttribute('aria-current');
+    }
+    $('bugpos').style.setProperty('--i',t);
+    $('wrap').setAttribute('data-step',Math.min(step,DONE));
+    $('count').textContent = step>LAST ? 'כל השלבים הושלמו' : 'שלב '+(t+1)+' מתוך 9';
+    $('foot').style.display = step>LAST ? 'none' : 'flex';
+    $('back').style.display = (step===0 && S.sub===0) ? 'none' : '';
+    $('error').textContent='';
+    setNextLabel();
+
+    if(step===1) renderThumbs();
+    if(step===3){renderErrs();showDiff();}
+    if(step===4) renderRubric();
+    if(QS[step]) renderQS(step);
+    if(step===CHOICE) $('final-score').textContent=score()+' מתוך 100';
+    if(step===DONE) renderDone();
+
+    if(focus){
+      var h=document.querySelector('.screen.on h2');
+      window.scrollTo(0,0);
+      if(h){try{h.focus({preventScroll:true});}catch(e){}}
+    }
+  }
+  $('back').addEventListener('click',function(){
+    if(S.sub>0){S.sub--;show(S.step,true);return;}
+    if(S.step>0){S.sub=pages(S.step-1)-1;show(S.step-1,true);}
+  });
+  $('next').addEventListener('click',function(){
+    var msg=PREVIEW?'':check(S.step);
+    if(msg){$('error').textContent=msg;return;}
+    if(S.sub<pages(S.step)-1){S.sub++;show(S.step,true);return;}
+    if(S.step<LAST){S.sub=0;show(S.step+1,true);return;}
+    submit();
+  });
+
+  /* submit */
+  function payload(){
+    var items=RUBRICS[S.version]||[],marks=[];
+    for(var i=0;i<items.length;i++){
+      var v=String(S.rubric[i]);
+      marks.push(items[i][0]+': '+(v==='1'?'מלא':v==='0.5'?'חלקי':'חסר'));
+    }
+    var yes=S.diff==='yes';
+    var fields=[
+      ['קוד חדש',S.code],
+      ['בדיקה 1 – קלט',S.t1in],['בדיקה 1 – פלט',S.t1out],
+      ['בדיקה 2 – קלט',S.t2in],['בדיקה 2 – פלט',S.t2out],
+      ['נמצאו הבדלים',yes?'כן':'לא'],
+      ['טעויות',yes?S.errors.map(function(e,i){return (i+1)+'. ['+e.type+'] בבוחן: '+e.was+' | נכון: '+e.fix;}).join('\n'):''],
+      ['קלט עם פלט שגוי',yes?S.breakIn:''],
+      ['מה הודפס ומה נכון',yes?S.breakWhy:''],
+      ['ציון עצמי',score()],
+      ['סימון המחוון',marks.join('\n')]
+    ];
+    allQs().forEach(function(q){
+      var v=ansText(q);
+      fields.push([q.h,(q.type==='scale'&&v)?Number(v):v]);
+    });
+    return {name:S.name.trim(),version:S.version,photos:photos,choice:S.choice,fields:fields};
+  }
+  function submit(){
+    var n=$('next'),b=$('back'),err=$('error');
+    n.disabled=true;b.disabled=true;n.textContent='שולחים...';err.textContent='';
+    function ok(res){
+      n.disabled=false;b.disabled=false;
+      S.submitted=true;S.drawn=(res&&res.drawn)||'';save();
+      try{localStorage.removeItem(KEY+'-photos');}catch(e){}
+      show(DONE,true);
+    }
+    function fail(){
+      n.disabled=false;b.disabled=false;setNextLabel();
+      err.textContent='השליחה לא הצליחה. בדקו את החיבור לאינטרנט ולחצו שוב. מה שמילאתם נשמר במכשיר.';
+    }
+    if(PREVIEW){
+      setTimeout(function(){ok({drawn:S.choice==='keep'?'':(['א','ב','ג'].filter(function(v){return v!==S.version;})[0])});},300);
+    }else if(GAS){
+      google.script.run.withSuccessHandler(ok).withFailureHandler(fail).submitTask(payload());
+    }else{
+      post('task',payload(),ok,fail);
+    }
+  }
+
+  /* done + drawn question */
+  function renderDone(){
+    $('done-preview').hidden=!PREVIEW;
+    $('pv-q').hidden=!PREVIEW;
+    var base='הציון העצמי שנרשם: '+score()+' מתוך 100.';
+    if(S.drawn && QUESTIONS[S.drawn]){
+      $('done-text').textContent=base+' למטה מחכה השאלה שהוגרלה. פתרו אותה לבד, בלי בינה מלאכותית, הריצו והגישו כאן.';
+      $('q-card').innerHTML=QUESTIONS[S.drawn];
+      $('retake').classList.add('on');
+      showRetakeState();
+    }else{
+      $('done-text').textContent=base;
+      $('retake').classList.remove('on');
+    }
+  }
+  function showRetakeState(){
+    $('r-ok').hidden=!S.retakeSent;
+    $('r-send').hidden=!!S.retakeSent;
+  }
+  $('r-send').addEventListener('click',function(){
+    var err=$('r-error'),btn=this;
+    if(PREVIEW){S.retakeSent=true;showRetakeState();return;}
+    if((S.retakeCode||'').trim().length<20){err.textContent='חסר הפתרון. הדביקו את התוכנית המלאה.';return;}
+    if(!filled(S.retakeOut)){err.textContent='חסר פלט ההרצה על הדוגמה שבשאלה.';return;}
+    err.textContent='';btn.disabled=true;btn.textContent='שולחים...';
+    function ok(){btn.disabled=false;btn.textContent='שולחים את הפתרון';S.retakeSent=true;save();showRetakeState();}
+    function fail(){btn.disabled=false;btn.textContent='שולחים את הפתרון';err.textContent='השליחה לא הצליחה. בדקו את החיבור לאינטרנט ולחצו שוב.';}
+    var data={name:S.name.trim(),version:S.version,drawn:S.drawn,code:S.retakeCode,output:S.retakeOut};
+    if(GAS) google.script.run.withSuccessHandler(ok).withFailureHandler(fail).submitRetake(data);
+    else post('retake',data,ok,fail);
+  });
+
+  document.querySelector('main').addEventListener('change',function(ev){if(ev.target.id!=='f-photo') $('error').textContent='';});
+  if(PREVIEW){
+    $('pv-banner').hidden=false;$('wrap').classList.add('preview');
+    for(var li=0;li<lis.length;li++){(function(n){lis[n].addEventListener('click',function(){S.sub=0;show(n,true);});})(li);}
+    var qb=document.querySelectorAll('#pv-q button');
+    for(var b2=0;b2<qb.length;b2++){qb[b2].addEventListener('click',function(){S.drawn=this.getAttribute('data-q');S.retakeSent=false;renderDone();});}
+  }
+  show(S.submitted?DONE:Math.min(S.step||0,LAST),false);
+})();
+</script>
+</body>
+</html>
